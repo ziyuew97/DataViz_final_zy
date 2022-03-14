@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <!-- set styles on the top -->
+    <style>
+        .chart-container {
+            max-width: 1050px;
+            /* border: 2px solid red; */
+            margin: 0 auto;
+            /* auto centers the div */
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        }
+
+        svg {
+            /* border: 2px solid purple; */
+            overflow: visible;
+            /* margin: 0 auto; */
+        }
+
+        h1 {
+            margin: 40px 5px 40px 5px; 
+            /* border: 2px solid green; */
+        }
+
+        h2 {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: 54px;
+        }
+
+        h3 {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: 42px;
+        }
+
+        p {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: 24px;
+            text-align: left;
+            margin: 50px 5px 40px 5px;
+            line-height: 1.2;
+            max-width: 1050px
+            
+        }
+
+        .x .tick line {
+            stroke: rgba(0, 0, 0, .2);
+        }
+
+        .y .tick line {
+            stroke: rgba(0, 0, 0, .2);
+        }
+
+        .x .domain {
+            display: none;
+        }
+
+        .y .domain {
+            display: none;
+        }
+
+        .y .tick text {
+            font-size: 14px;
+            fill: #333;
+
+        }
+
+        .x .tick text {
+            font-size: 14px;
+            fill: #333;
+        }
+
+        .pop-up {
+            position: absolute;
+            border: 1px solid black;
+            border-radius: 1px;
+            line-height: 1.2;
+            width: 200px;
+            pointer-events: none;
+            background-color: white;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chart-container">
+        <h2 class="headline">
+            COVID-19 New Cases and Unemployment Rate in US 2020
+        </h2>
+
+        <p> 3/12/2022  Ziyue Wang</p>
+
+        <h3>
+            Overview of US
+        </h3>
+
+        <p>Since the outbreak of COVID-19 in 2020, the world economy has been seriously affected. COVID-19's raging in the United States has also affected the unemployment rate. However, with the development of the epidemic, the unemployment rate did not increase blindly, but decreased in the middle and late 2020.</p>
+
+        <h1>
+            COVID-19 New Cases in US 2020
+        </h1>
+
+        <svg width="800px" height="700px" id="chart1"></svg>
+
+        <h1 class="headline">
+            Unemployment Rate in US 2020
+        </h1>
+        <svg width="800px" height="700px" id="chart2"></svg>
+
+        <p>In the case of the United States, the number of new cases in COVID-19 increased rapidly in 2020. Especially in the second half of 2020, the number of new products increased rapidly. In terms of the unemployment rate, the national unemployment rate peaked in April and then began to decline gradually. Because the unemployment caused by COVID-19 is mostly temporary, so when COVID-19 has lasted for a while, people's work has gradually resumed.</p>
+
+        <h3>
+            Situations by States
+        </h3>
+
+        <h1 class="headline">
+            COVID-19 New Cases by States in 2020
+        </h1>
+        <svg width="1050px" height="700px" id="chart3"></svg>
+
+        <p>In term of individual state, the number of COVID-19 in each state is rising. In terms of quantity alone, the epidemic growth in California is the most serious. California also has the highest average unemployment rate. It can be seen that where the epidemic is serious, it has a greater impact on the unemployment rate and a more serious negative impact on the economy.</p>
+
+        <h1 class="headline">
+            Average Unemployment Rate by State in 2020
+        </h1>
+        <svg width="1050px" height="700px" id="chart4"></svg>
+        
+        <div class="pop-up"></div>
+
+        <p>Overall, states are more or less affected by the epidemic and unemployment has increased. The economic impact of the epidemic is even greater. However, this rise is not sustainable, and the unemployment rate will gradually decline in the second half of 2020. Although the number of new cases increased very rapidly in the last few months of 2020, the unemployment rate did not rise as rapidly as before April 2020.</p>
+
+    </div>
+
+    <!-- <div id="chart2" class="chart-container">
+        <h1 class="headline">
+            Unemployment Rate in US 2020
+        </h1>
+        <svg width="1050px" height="1000px"></svg>
+    </div> -->
+
+</body>
+
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<!-- we're using d3 version 6 (the latest version) for all out work -->
+<script src="https://unpkg.com/topojson@3"></script>
+
+<script>
+    console.log({ d3 })
+    //https://observablehq.com/@mbostock/global-temperature-trends
+    console.log({topojson})
+
+    //cool tricks for javascript arrays
+    //objects
+    //look up tables
+    //looping, or for each
+
+    let width = 1050;
+    let height = 700;
+
+    let svg1 = d3.select("body")
+        .select("#chart1")
+
+    console.log(svg1)
+
+    //console.log
+
+    //arrays
+    //objects
+    //functions
+
+    d3.csv("cases.csv").then(function (data) {
+
+        //when temp is loaded, then pass data into this block
+        //all references to the data need to be in this block
+
+        //d3.csv is part of a suite of other functions that can do json, xml, tsv too.  
+        //https://github.com/d3/d3-fetch
+
+
+        data.forEach(function (row) {
+            row.submission_date = new Date( row.submission_date + "T00:00")
+            row.new_case = +row.new_case
+        })
+
+        
+
+        console.log(data)
+
+
+        let margin = { top: 30, right: 10, bottom: 10, left: 30 };
+
+        //d3 scales for the x and y axis
+        //domain takes the data we have and maps them into SVG space
+        //in this case we need to use scaleTime because we're dealin time data
+        let x = d3.scaleTime()
+            .domain(d3.extent(data.map(function (d) { return d.submission_date }))) //d3 extent
+            .range([margin.left, width - margin.right])
+
+        //in this case we need to use scaleLinear because we're dealin linear data
+        let y = d3.scaleLinear()
+            .domain(d3.extent(data.map(function (d) { return d.new_case })))
+            .range([height - margin.bottom, margin.top])
+
+
+        //define the settings for our axes
+        //https://github.com/d3/d3-axis
+        let yAxisSettings = d3.axisLeft(y) //set axis to the left
+            .ticks(5) //approx how many ticks, the function will not necesarily give you that number
+            .tickSize(-width) //size of tick lines
+            .tickFormat(d3.format(".0f")) //what format do you want https://github.com/d3/d3-format 
+            .tickPadding(10) //distance from tick labels to tick marks
+
+
+        let xAxisSettings = d3.axisBottom(x)
+            .ticks(10)
+            .tickSize(10)
+            .tickPadding(10)
+
+        let bg = svg1.append("rect")
+            .attr("x", margin.left)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            .style("fill", "rgba(0,0,0,.04)")
+
+        //adding to the axes to our chart
+        let xAxisTicks = svg1.append("g")
+            .attr("class", "x axis") //give each axis a class
+            .call(xAxisSettings)
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+
+
+        let yAxisTicks = svg1.append("g")
+            .attr("class", "y axis")
+            .call(yAxisSettings)
+            .attr("transform", `translate(${margin.left},0)`)
+        
+
+        let line = d3.line() //define a line function
+            .defined(d => !isNaN(d.new_case))
+            .x(function (d) { return x(d.submission_date) }) //accessing date 
+            .y(function (d) { return y(d.new_case) }) //accesssing value 
+
+        // //neat trick https://observablehq.com/@d3/line-with-missing-data
+
+        let line_path = svg1.append("path") //Add a grouping element. It's useful to organize svg elements. https://developer.mozilla.org/en-US/docs/Web/SVG/Element/g
+            .attr("class", "line") // Give circles a class name.
+            .attr("d", line(data))
+            .style("fill", "none")
+            .style("stroke", "darkblue")
+            .style("stroke-width", 1.8)
+        
+
+        // test
+    
+    
+    })
+
+    let svg2 = d3.select("body")
+        .select("#chart2")
+
+    console.log(svg2)
+
+    //console.log
+
+    //arrays
+    //objects
+    //functions
+
+    d3.csv("unemp.csv").then(function (data) {
+
+        //when temp is loaded, then pass data into this block
+        //all references to the data need to be in this block
+
+        //d3.csv is part of a suite of other functions that can do json, xml, tsv too.  
+        //https://github.com/d3/d3-fetch
+
+
+        data.forEach(function (row) {
+            row.date = new Date( row.date + "T00:00")
+            row.US = +row.US
+        })
+
+        
+
+        console.log(data)
+
+
+        let margin = { top: 30, right: 10, bottom: 10, left: 30 };
+
+        //d3 scales for the x and y axis
+        //domain takes the data we have and maps them into SVG space
+        //in this case we need to use scaleTime because we're dealin time data
+        let x = d3.scaleTime()
+            .domain(d3.extent(data.map(function (d) { return d.date }))) //d3 extent
+            .range([margin.left, width - margin.right])
+
+        //in this case we need to use scaleLinear because we're dealin linear data
+        let y = d3.scaleLinear()
+            .domain(d3.extent(data.map(function (d) { return d.US })))
+            .range([height - margin.bottom, margin.top])
+
+
+        //define the settings for our axes
+        //https://github.com/d3/d3-axis
+        let yAxisSettings = d3.axisLeft(y) //set axis to the left
+            .ticks(5) //approx how many ticks, the function will not necesarily give you that number
+            .tickSize(-width) //size of tick lines
+            .tickFormat(d3.format(".0f")) //what format do you want https://github.com/d3/d3-format 
+            .tickPadding(10) //distance from tick labels to tick marks
+
+
+        let xAxisSettings = d3.axisBottom(x)
+            .ticks(10)
+            .tickSize(10)
+            .tickPadding(10)
+
+        let bg = svg2.append("rect")
+            .attr("x", margin.left)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            .style("fill", "rgba(0,0,0,.04)")
+
+        //adding to the axes to our chart
+        let xAxisTicks = svg2.append("g")
+            .attr("class", "x axis") //give each axis a class
+            .call(xAxisSettings)
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+
+
+        let yAxisTicks = svg2.append("g")
+            .attr("class", "y axis")
+            .call(yAxisSettings)
+            .attr("transform", `translate(${margin.left},0)`)
+        
+
+        let line = d3.line() //define a line function
+            .defined(d => !isNaN(d.US))
+            .x(function (d) { return x(d.date) }) //accessing date 
+            .y(function (d) { return y(d.US) }) //accesssing value 
+
+        // //neat trick https://observablehq.com/@d3/line-with-missing-data
+
+        let line_path = svg2.append("path") //Add a grouping element. It's useful to organize svg elements. https://developer.mozilla.org/en-US/docs/Web/SVG/Element/g
+            .attr("class", "line") // Give circles a class name.
+            .attr("d", line(data))
+            .style("fill", "none")
+            .style("stroke", "darkred")
+            .style("stroke-width", 1.8)
+
+
+    })
+    
+    
+    
+    
+    let svg3 = d3.select("body")
+        .select("#chart3")
+
+    console.log(svg3)
+
+
+    //console.log
+
+    //arrays
+    //objects
+    //functions
+
+    d3.csv("new_cases.csv").then(function (data) {
+
+        //when temp is loaded, then pass data into this block
+        //all references to the data need to be in this block
+
+        //d3.csv is part of a suite of other functions that can do json, xml, tsv too.  
+        //https://github.com/d3/d3-fetch
+
+
+        data.forEach(function (row) {
+            row.submission_date = new Date( row.submission_date + "T00:00")
+            row.new_case = +row.new_case
+        })
+
+        
+
+        console.log(data)
+
+
+        let margin = { top: 30, right: 10, bottom: 10, left: 30 };
+
+        //d3 scales for the x and y axis
+        //domain takes the data we have and maps them into SVG space
+        //in this case we need to use scaleTime because we're dealin time data
+        let x = d3.scaleTime()
+            .domain(d3.extent(data.map(function (d) { return d.submission_date }))) //d3 extent
+            .range([margin.left, width - margin.right])
+
+        //in this case we need to use scaleLinear because we're dealin linear data
+        let y = d3.scaleLinear()
+            .domain(d3.extent(data.map(function (d) { return d.new_case })))
+            .range([height - margin.bottom, margin.top])
+
+
+        //define the settings for our axes
+        //https://github.com/d3/d3-axis
+        // https://github.com/d3/d3-time-format
+        //https://github.com/d3/d3-format
+        let yAxisSettings = d3.axisLeft(y) //set axis to the left
+            .ticks(5) //approx how many ticks, the function will not necesarily give you that number
+            .tickSize(-width) //size of tick lines
+            .tickFormat(d3.format("0")) //what format do you want https://github.com/d3/d3-format 
+            .tickPadding(10) //distance from tick labels to tick marks
+            
+
+
+        let xAxisSettings = d3.axisBottom(x)
+            .ticks(10)
+            .tickSize(10)
+            .tickPadding(10)
+
+        let bg = svg3.append("rect")
+            .attr("x", margin.left)
+            .attr("y", 0)
+            .attr("width", width)
+            .attr("height", height)
+            .style("fill", "rgba(0,0,0,.04)")
+
+        //adding to the axes to our chart
+        let xAxisTicks = svg3.append("g")
+            .attr("class", "x axis") //give each axis a class
+            .call(xAxisSettings)
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+
+
+        let yAxisTicks = svg3.append("g")
+            .attr("class", "y axis")
+            .call(yAxisSettings)
+            .attr("transform", `translate(${margin.left},0)`)
+
+        let line = d3.line() //define a line function
+            .defined(d => !isNaN(d.new_case))
+            .x(function (d) { return x(d.submission_date) }) //accessing date 
+            .y(function (d) { return y(d.new_case) }) //accesssing value 
+
+
+        
+        let grouped_data = d3.group(data, d => d.NAME);
+
+        console.log(grouped_data)
+
+        // // let agencies = Array.from(grouped_data.keys())
+
+        let line_path = svg3.append("g")
+        .selectAll(".line")
+        .data(grouped_data)
+        .join("path")
+        .attr("class","line")
+        .attr("class", function(d) {
+            return "line " +  d[0]
+        })
+        .attr("d", function(d) {
+            return line(d[1])
+        })
+        .style("fill", "none")
+        .style("stroke", d => {
+            if(d[0] == "California") {
+                return "blue"
+            } else {
+                return "#999"
+            }
+        })
+        .style("stroke-width", d => {
+            if(d[0] == "California") {
+                return "1px"
+            } else {
+                return "1px"
+            }
+        })
+
+        let baseline = svg3.append("line")
+        .attr("x1", margin.left)
+        .attr("x2", width + margin.left)
+        .attr("y1", y(0))
+        .attr("y2", y(0))
+        .style("stroke", "black")
+        .style("stroke-width", "2px")
+
+        let labels = svg3.append("text")
+            .attr("class","label")
+            .attr("x", 870)
+            .attr("y", 60)
+            .text("California")
+            .style("fill","darkblue")
+            .style("font-size", "28px")
+
+    })
+
+
+    let svg4 = d3.select("body")
+        .select("#chart4")
+
+    console.log(svg4)
+
+    let margin = { top: 10, right: 10, bottom: 0, left: 20};
+
+    d3.json("output.json")
+    .then(function(data){
+        console.log("loaded")
+        console.log(data)
+
+    let counties = topojson.feature(data, data.objects.bubbles)
+    let states = topojson.feature(data, data.objects.cb_2018_us_state_20m)
+        console.log(states)
+
+    let projection = d3.geoIdentity()
+        .fitSize([width, height], states)
+        .reflectY(true)
+    
+    let path = d3.geoPath(projection)
+
+
+    svg4.append("g")
+        .attr("class", "states")
+        .selectAll("path")
+        .data(states.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", "lightgrey")
+        .attr("stroke", "white")
+
+    let circles = svg4.append("g")
+        .selectAll(".circles")
+        .data(counties.features.filter(d => d.geometry != null).sort((a,b)=> d3.descending(a.properties.mean, b.properties.mean)))
+        .join("circle")
+        .attr("class", function (d) {return "circie p-" + d.properties.NAME})
+        .attr("fill","lightcoral")
+        .attr("stroke", "#fff")
+        .attr("fill-opacity", 0.5)
+        .attr("stroke-width", 0.8)
+        .attr("transform", d => `translate(${projection([d.geometry.coordinates[0], d.geometry.coordinates[1]])})`)
+        .attr("r", d => d.properties.mean*3)
+
+    let popup = d3.select(".pop-up")
+
+    circles.on("mouseover", (event, d) => {
+
+        circles
+            .style("stroke", "#fff")
+            .style("stroke-width", .5)
+            .style("fill", "lightcoral")
+            .style("fill-opacity", .5)
+
+        svg4.select(".p-" + d.properties.NAME)
+            .style("stroke", "black")
+            .style("stroke-width", 2)
+            .style("fill", "yellow")
+            .style("fill-opacity", 1)
+            .raise()
+
+        // let reScaleLang = d3.scaleThreshold()
+        //     .domain([0]) //make sure to put this in brackets!
+        //     .range(["below", "above"])
+
+        let num = +d.properties.mean
+
+        let lang = "In " + d.properties.NAME + ", " + " the number of unemployment is "
+        lang += d3.format(".1f")(Math.abs(num)) + "."
+
+        popup
+            .style("opacity", 1)
+            .style("left", (event.x - 100) + "px")
+            .style("top", (event.y - 150) + "px")
+            .html(lang)
+
+    })
+
+    circles.on("mouseout", (event, d) => {
+        // console.log(event)
+        circles
+            .style("stroke", "#fff")
+            .style("stroke-width", .5)
+            .style("fill", "lightcoral")
+            .style("fill-opacity", .5)
+
+        popup
+            .style("opacity", 0)
+
+    })
+
+
+
+
+})
+
+
+
+</script>
